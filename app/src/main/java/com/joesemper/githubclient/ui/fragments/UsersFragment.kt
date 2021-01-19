@@ -23,13 +23,14 @@ class UsersFragment : MvpAppCompatFragment(), UsersView, BackButtonListener {
 
     val presenter: UsersPresenter by moxyPresenter { UsersPresenter(GithubUsersRepo(), App.instance.router) }
 
-    var adapter: UsersRVAdapter? = null
+    private var adapter: UsersRVAdapter? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
         View.inflate(context, R.layout.fragment_users, null)
 
     override fun init() {
         rv_users.layoutManager = LinearLayoutManager(context)
+
         adapter = UsersRVAdapter(presenter.usersListPresenter)
         rv_users.adapter = adapter
     }
