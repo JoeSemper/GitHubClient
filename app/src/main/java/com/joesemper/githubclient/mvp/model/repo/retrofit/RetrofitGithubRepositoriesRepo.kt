@@ -1,6 +1,7 @@
 package com.joesemper.githubclient.mvp.model.repo.retrofit
 
 import com.joesemper.githubclient.mvp.model.api.IDataSource
+import com.joesemper.githubclient.mvp.model.cache.IGithubRepositoriesCache
 import com.joesemper.githubclient.mvp.model.entity.GithubRepository
 import com.joesemper.githubclient.mvp.model.entity.GithubUser
 import com.joesemper.githubclient.mvp.model.entity.room.Database
@@ -13,40 +14,35 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 class RetrofitGithubRepositoriesRepo(
     val api: IDataSource,
     val networkStatus: INetworkStatus,
-    val db: Database
+    val cache: IGithubRepositoriesCache
 ) :
     IGithubUserRepositoriesRepo {
 
     override fun getUserRepositories(user: GithubUser) =
-        networkStatus.isOnlineSingle().flatMap { isOnline ->
+        checkOnlineStatus().flatMap { isOnline ->
             if (isOnline) {
-                user.reposUrl?.let { url ->
-                    api.getUserRepositories(url).flatMap { repositories ->
-                        Single.fromCallable {
-                            val roomUser = user.login?.let { db.userDao.findByLogin(it) }
-                                ?: throw RuntimeException("No such user in cache")
-                            val roomRepos = repositories.map {
-                                RoomGithubRepository(
-                                    it.id ?: "",
-                                    it.name ?: "",
-                                    it.forksCount ?: 0,
-                                    roomUser.id
-                                )
-                            }
-
-                            db.repositoryDao.insert(roomRepos)
-
-                            repositories
-                        }
-                    }
+                getUserRepositoriesFromNetwork(user)?.flatMap { repositories ->
+                    cacheUserRepositories(user, repositories)
+                    createSingle(repositories)
                 }
             } else {
-                Single.fromCallable {
-                    val roomUser = user.login?.let { db.userDao.findByLogin(it) }
-                        ?: throw RuntimeException("No such user in cache")
-                    db.repositoryDao.findForUser(roomUser.id)
-                        .map { GithubRepository(it.id, it.name, it.forksCount) }
-                }
+                getUserRepositoriesFromCache(user)
             }
         }.subscribeOn(Schedulers.io())
+
+
+
+    private fun checkOnlineStatus(): Single<Boolean> = networkStatus.isOnlineSingle()
+
+    private fun getUserRepositoriesFromNetwork(user: GithubUser) =
+        user.reposUrl?.let { url ->
+            api.getUserRepositories(url)
+        }
+
+    private fun cacheUserRepositories(user: GithubUser, repositories: List<GithubRepository>) =
+        cache.cacheRepositories(user, repositories)
+
+    private fun getUserRepositoriesFromCache(user: GithubUser) = cache.getRepositories(user)
+
+    private fun createSingle(data: List<GithubRepository>) = Single.fromCallable { data }
 }
