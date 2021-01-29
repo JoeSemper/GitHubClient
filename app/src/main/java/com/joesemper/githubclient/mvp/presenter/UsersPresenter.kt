@@ -1,25 +1,22 @@
 package com.joesemper.githubclient.mvp.presenter
 
-import android.util.Log
 import com.joesemper.githubclient.mvp.model.entity.GithubUser
-import com.joesemper.githubclient.mvp.model.entity.GithubUsersRepo
+import com.joesemper.githubclient.mvp.model.repo.IGithubUsersRepo
 import com.joesemper.githubclient.mvp.presenter.list.IUserListPresenter
 import com.joesemper.githubclient.mvp.view.UsersView
 import com.joesemper.githubclient.mvp.view.list.UserItemView
 import com.joesemper.githubclient.navigation.Screens
-import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.core.Observer
-import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.core.Scheduler
 import moxy.MvpPresenter
 import ru.terrakok.cicerone.Router
 import ru.terrakok.cicerone.Screen
 
-const val TAG = "RxJava"
 
-class UsersPresenter(private val usersRepo: GithubUsersRepo, private val router: Router) :
-    MvpPresenter<UsersView>() {
-
-    private lateinit var users: List<GithubUser>
+class UsersPresenter(
+    private val mainThreadScheduler: Scheduler,
+    private val usersRepo: IGithubUsersRepo,
+    private val router: Router
+) : MvpPresenter<UsersView>() {
 
     class UsersListPresenter : IUserListPresenter {
         val users = mutableListOf<GithubUser>()
@@ -30,7 +27,9 @@ class UsersPresenter(private val usersRepo: GithubUsersRepo, private val router:
 
         override fun bindView(view: UserItemView) {
             val user = users[view.pos]
-            view.setLogin(user.login)
+
+            user.login?.let { view.setLogin(it) }
+            user.avatarUrl?.let { view.loadAvatar(it) }
         }
     }
 
@@ -40,38 +39,32 @@ class UsersPresenter(private val usersRepo: GithubUsersRepo, private val router:
         super.onFirstViewAttach()
 
         viewState.init()
-        subscribeForDb()
         loadData()
         setClickListeners()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        unsubscribeForDb()
-    }
-
-    private fun subscribeForDb() {
-        usersRepo.getUsers().subscribe(userObserver)
-    }
-
-    private fun unsubscribeForDb(){
-        userObserver.disposable?.dispose()
-    }
-
     private fun loadData() {
-        usersListPresenter.users.addAll(users)
-        viewState.updateList()
+        usersRepo.getUsers()
+            .observeOn(mainThreadScheduler)
+            .subscribe({ users ->
+                usersListPresenter.users.clear()
+                usersListPresenter.users.addAll(users)
+                viewState.updateList()
+            }, {
+                println("Error: ${it.message}")
+            })
     }
 
     private fun setClickListeners() {
         usersListPresenter.itemClickListener = { itemView ->
             val screen = getScreenByPosition(itemView.pos)
+
             router.navigateTo(screen)
         }
     }
 
     private fun getScreenByPosition(pos: Int): Screen {
-        return Screens.UserScreen(users[pos])
+        return Screens.UserScreen(usersListPresenter.users[pos])
     }
 
     fun backPressed(): Boolean {
@@ -79,23 +72,4 @@ class UsersPresenter(private val usersRepo: GithubUsersRepo, private val router:
         return true
     }
 
-    private val userObserver = object : Observer<List<GithubUser>> {
-        var disposable: Disposable? = null
-
-        override fun onSubscribe(d: Disposable?) {
-            disposable = d
-        }
-
-        override fun onNext(usersList: List<GithubUser>) {
-            users = usersList
-        }
-
-        override fun onError(e: Throwable?) {
-            Log.d(TAG, "onError: ${e?.message}")
-        }
-
-        override fun onComplete() {
-            Log.d(TAG, "onComplete")
-        }
-    }
 }
