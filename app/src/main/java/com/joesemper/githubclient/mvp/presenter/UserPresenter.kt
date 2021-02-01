@@ -12,12 +12,8 @@ import moxy.MvpPresenter
 import ru.terrakok.cicerone.Router
 import ru.terrakok.cicerone.Screen
 
-class UserPresenter(
-    private val mainThreadScheduler: Scheduler,
-    private val user: GithubUser,
-    private val repositoriesRepo: IGithubUserRepositoriesRepo,
-    private val router: Router
-) : MvpPresenter<UserView>() {
+class UserPresenter(val user: GithubUser, val mainThreadScheduler: Scheduler, val repositoriesRepo: IGithubUserRepositoriesRepo, val router: Router) :
+    MvpPresenter<UserView>() {
 
 
     class RepositoriesListPresenter : IRepositoryListPresenter {

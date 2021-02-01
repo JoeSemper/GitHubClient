@@ -1,14 +1,17 @@
 package com.joesemper.githubclient
 
 import android.app.Application
+import com.joesemper.githubclient.di.AppComponent
+import com.joesemper.githubclient.di.DaggerAppComponent
+import com.joesemper.githubclient.di.modules.AppModule
 import com.joesemper.githubclient.mvp.model.entity.room.Database
 import ru.terrakok.cicerone.Cicerone
 import ru.terrakok.cicerone.Router
 
 class App : Application() {
-    private val cicerone: Cicerone<Router> by lazy {
-        Cicerone.create()
-    }
+
+    lateinit var appComponent: AppComponent
+        private set
 
     companion object {
         lateinit var instance: App
@@ -18,13 +21,8 @@ class App : Application() {
         super.onCreate()
         instance = this
 
-        Database.create(this)
+        appComponent = DaggerAppComponent.builder()
+            .appModule(AppModule(this))
+            .build()
     }
-
-    val navigatorHolder
-        get() = cicerone.navigatorHolder
-
-    val router
-        get() = cicerone.router
-
 }

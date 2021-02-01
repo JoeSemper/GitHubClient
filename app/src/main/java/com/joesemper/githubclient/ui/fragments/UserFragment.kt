@@ -21,8 +21,16 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import kotlinx.android.synthetic.main.fragment_user.*
 import moxy.MvpAppCompatFragment
 import moxy.ktx.moxyPresenter
+import ru.terrakok.cicerone.Router
+import javax.inject.Inject
 
 class UserFragment() : MvpAppCompatFragment(), UserView, BackButtonListener {
+
+    // ДЗ избавиться из зависимостей ниже
+    @Inject
+    lateinit var router: Router
+    @Inject
+    lateinit var database: Database
 
     private lateinit var user: GithubUser
 
@@ -33,19 +41,17 @@ class UserFragment() : MvpAppCompatFragment(), UserView, BackButtonListener {
             arguments = Bundle().apply {
                 putParcelable(USER_ARG, user)
             }
+
+            App.instance.appComponent.inject(this)
         }
     }
 
-    private val presenter: UserPresenter by moxyPresenter {
+    val presenter: UserPresenter by moxyPresenter {
         user = arguments?.getParcelable<GithubUser>(USER_ARG) as GithubUser
 
-        UserPresenter(
-            AndroidSchedulers.mainThread(), user,
-            RetrofitGithubRepositoriesRepo(
-                ApiHolder().api,
-                AndroidNetworkStatus(App.instance),
-                RoomGithubRepositoriesCache(Database.getInstance())),
-            App.instance.router
+        UserPresenter(user, AndroidSchedulers.mainThread(),
+            RetrofitGithubRepositoriesRepo(ApiHolder().api, AndroidNetworkStatus(App.instance), RoomGithubRepositoriesCache(database)),
+            router
         )
     }
 
