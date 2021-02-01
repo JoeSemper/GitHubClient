@@ -11,9 +11,19 @@ import io.reactivex.rxjava3.core.Scheduler
 import moxy.MvpPresenter
 import ru.terrakok.cicerone.Router
 import ru.terrakok.cicerone.Screen
+import javax.inject.Inject
 
-class UserPresenter(val user: GithubUser, val mainThreadScheduler: Scheduler, val repositoriesRepo: IGithubUserRepositoriesRepo, val router: Router) :
+class UserPresenter(val user: GithubUser) :
     MvpPresenter<UserView>() {
+
+    @Inject
+    lateinit var repositoriesRepo: IGithubUserRepositoriesRepo
+
+    @Inject
+    lateinit var router: Router
+
+    @Inject
+    lateinit var mainThreadScheduler: Scheduler
 
 
     class RepositoriesListPresenter : IRepositoryListPresenter {

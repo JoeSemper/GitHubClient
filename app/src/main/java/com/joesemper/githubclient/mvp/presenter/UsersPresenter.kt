@@ -13,12 +13,17 @@ import ru.terrakok.cicerone.Screen
 import javax.inject.Inject
 
 
-class UsersPresenter(private val mainThreadScheduler: Scheduler, ) : MvpPresenter<UsersView>() {
+class UsersPresenter : MvpPresenter<UsersView>() {
 
     @Inject
     lateinit var usersRepo: IGithubUsersRepo
+
     @Inject
     lateinit var router: Router
+
+    @Inject
+    lateinit var mainThreadScheduler: Scheduler
+
 
     class UsersListPresenter : IUserListPresenter {
         val users = mutableListOf<GithubUser>()
