@@ -22,14 +22,11 @@ class UserPresenter(
 
     class RepositoriesListPresenter : IRepositoryListPresenter {
         val repositories = mutableListOf<GithubRepository>()
-
         override var itemClickListener: ((RepositoryItemView) -> Unit)? = null
-
         override fun getCount() = repositories.size
 
         override fun bindView(view: RepositoryItemView) {
             val repository = repositories[view.pos]
-
             repository.name?.let { view.setName(it) }
         }
     }
@@ -38,23 +35,22 @@ class UserPresenter(
 
     override fun onFirstViewAttach() {
         super.onFirstViewAttach()
+
         setClickListeners()
         loadData()
         viewState.init()
     }
 
-    private fun loadData() {
-        user.reposUrl?.let {
-            repositoriesRepo.getUserRepositories(user.reposUrl)
-                .observeOn(mainThreadScheduler)
-                .subscribe({ repositories ->
-                    repositoriesListPresenter.repositories.clear()
-                    repositoriesListPresenter.repositories.addAll(repositories)
-                    viewState.updateList()
-                }, {
-                    println("Error: ${it.message}")
-                })
-        }
+    fun loadData() {
+        repositoriesRepo.getUserRepositories(user)
+            .observeOn(mainThreadScheduler)
+            .subscribe({ repositories ->
+                repositoriesListPresenter.repositories.clear()
+                repositoriesListPresenter.repositories.addAll(repositories)
+                viewState.updateList()
+            }, {
+                println("Error: ${it.message}")
+            })
     }
 
     private fun setClickListeners() {

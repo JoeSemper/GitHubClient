@@ -11,7 +11,8 @@ import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_repository.view.*
 
 
-class RepositoriesRVAdapter(val presenter : IRepositoryListPresenter):  RecyclerView.Adapter<RepositoriesRVAdapter.ViewHolder>() {
+class RepositoriesRVAdapter(val presenter : IRepositoryListPresenter) :
+    RecyclerView.Adapter<RepositoriesRVAdapter.ViewHolder>() {
 
     inner class ViewHolder(override val containerView: View) : RecyclerView.ViewHolder(containerView),
         LayoutContainer, RepositoryItemView {
