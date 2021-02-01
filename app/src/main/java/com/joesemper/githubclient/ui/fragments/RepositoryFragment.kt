@@ -10,6 +10,7 @@ import com.joesemper.githubclient.mvp.model.entity.GithubRepository
 import com.joesemper.githubclient.mvp.presenter.RepositoryPresenter
 import com.joesemper.githubclient.mvp.view.RepositoryView
 import com.joesemper.githubclient.ui.BackButtonListener
+import com.joesemper.githubclient.ui.adapter.RepositoriesRVAdapter
 import kotlinx.android.synthetic.main.fragment_repository.*
 import moxy.MvpAppCompatFragment
 import moxy.ktx.moxyPresenter
@@ -26,13 +27,22 @@ class RepositoryFragment : MvpAppCompatFragment(), RepositoryView, BackButtonLis
         }
     }
 
-    val presenter: RepositoryPresenter by moxyPresenter {
-        val repository = arguments?.getParcelable<GithubRepository>(REPOSITORY_ARG) as GithubRepository
+    var adapter: RepositoriesRVAdapter? = null
 
-        RepositoryPresenter(repository, App.instance.router)
+    val presenter: RepositoryPresenter by moxyPresenter {
+        val repository =
+            arguments?.getParcelable<GithubRepository>(REPOSITORY_ARG) as GithubRepository
+
+        RepositoryPresenter(repository).apply {
+            App.instance.appComponent.inject(this)
+        }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ) =
         View.inflate(context, R.layout.fragment_repository, null)
 
     override fun init() {}

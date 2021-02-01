@@ -5,24 +5,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.joesemper.githubclient.ApiHolder
 import com.joesemper.githubclient.App
 import com.joesemper.githubclient.R
-import com.joesemper.githubclient.mvp.model.cache.room.RoomGithubRepositoriesCache
 import com.joesemper.githubclient.mvp.model.entity.GithubUser
-import com.joesemper.githubclient.mvp.model.entity.room.Database
-import com.joesemper.githubclient.mvp.model.repo.retrofit.RetrofitGithubRepositoriesRepo
 import com.joesemper.githubclient.mvp.presenter.UserPresenter
 import com.joesemper.githubclient.mvp.view.UserView
 import com.joesemper.githubclient.ui.BackButtonListener
 import com.joesemper.githubclient.ui.adapter.RepositoriesRVAdapter
-import com.joesemper.githubclient.ui.network.AndroidNetworkStatus
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import kotlinx.android.synthetic.main.fragment_user.*
 import moxy.MvpAppCompatFragment
 import moxy.ktx.moxyPresenter
 
-class UserFragment() : MvpAppCompatFragment(), UserView, BackButtonListener {
+class UserFragment : MvpAppCompatFragment(), UserView, BackButtonListener {
 
     private lateinit var user: GithubUser
 
@@ -36,17 +30,12 @@ class UserFragment() : MvpAppCompatFragment(), UserView, BackButtonListener {
         }
     }
 
-    private val presenter: UserPresenter by moxyPresenter {
+    val presenter: UserPresenter by moxyPresenter {
         user = arguments?.getParcelable<GithubUser>(USER_ARG) as GithubUser
 
-        UserPresenter(
-            AndroidSchedulers.mainThread(), user,
-            RetrofitGithubRepositoriesRepo(
-                ApiHolder().api,
-                AndroidNetworkStatus(App.instance),
-                RoomGithubRepositoriesCache(Database.getInstance())),
-            App.instance.router
-        )
+        UserPresenter(user).apply {
+            App.instance.appComponent.inject(this)
+        }
     }
 
     private var adapter: RepositoriesRVAdapter? = null

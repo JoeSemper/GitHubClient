@@ -10,6 +10,7 @@ import com.joesemper.githubclient.mvp.model.network.INetworkStatus
 import com.joesemper.githubclient.mvp.model.repo.IGithubUserRepositoriesRepo
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
+import javax.inject.Inject
 
 class RetrofitGithubRepositoriesRepo(
     val api: IDataSource,
@@ -17,6 +18,7 @@ class RetrofitGithubRepositoriesRepo(
     val cache: IGithubRepositoriesCache
 ) :
     IGithubUserRepositoriesRepo {
+
 
     override fun getUserRepositories(user: GithubUser) =
         checkOnlineStatus().flatMap { isOnline ->
